@@ -27,23 +27,57 @@ class MainDrawer extends StatelessWidget {
               ),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.fastfood,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.primary,
+                const CircleAvatar(
+                  backgroundImage: AssetImage('assets/images/login_image.png'),
+                  radius: 50,
                 ),
                 const SizedBox(
                   width: 18,
                 ),
-                Text(
-                  'Cooking up',
-                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                Flexible(
+                  child: Text(
+                    'Olá, Guilherme!',
+                    style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
                 ),
               ],
             ),
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.home,
+              size: 26,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Expenses',
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+            ),
+            onTap: () {
+              onSelectScreen('expenses');
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.bar_chart_rounded,
+              size: 26,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            title: Text(
+              'Analytics',
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+            ),
+            onTap: () {
+              onSelectScreen('analytics');
+            },
           ),
           ListTile(
             leading: Icon(

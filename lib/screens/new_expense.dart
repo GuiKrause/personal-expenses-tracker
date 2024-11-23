@@ -1,14 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/expense.dart';
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key, required this.onAddExpense});
-
-  final void Function(Expense expense) onAddExpense;
+  const NewExpense({super.key});
 
   @override
   State<NewExpense> createState() => _NewExpenseState();
@@ -19,6 +19,8 @@ class _NewExpenseState extends State<NewExpense> {
   final _amountController = TextEditingController();
   DateTime? _selectedDate;
   Category _selectedCategory = Category.leisure;
+
+  var _isSending = false;
 
   void _presentDatePicker() async {
     final initialDate = DateTime.now();
@@ -78,7 +80,10 @@ class _NewExpenseState extends State<NewExpense> {
     }
   }
 
-  void _submitExpense() {
+  void _submitExpense() async {
+    final url = Uri.https(
+        'personal-expenses-tracker-0-default-rtdb.firebaseio.com',
+        'expenses.json');
     final enteredAmount = double.tryParse(_amountController.text);
     final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
     if (_titleController.text.trim().isEmpty ||
@@ -87,15 +92,40 @@ class _NewExpenseState extends State<NewExpense> {
       _showDialog();
       return;
     }
-    widget.onAddExpense(
-      Expense(
+    setState(() {
+      _isSending = true;
+    });
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'title': _titleController.text,
+          'amount': enteredAmount,
+          'date': _selectedDate!.toIso8601String(),
+          'category': _selectedCategory.name.toString(),
+        }),
+      );
+      print(response);
+      final Map<String, dynamic> resData = json.decode(response.body);
+      Expense newExpense = Expense(
+        id: resData['name'].toString(),
         title: _titleController.text,
         amount: enteredAmount,
         date: _selectedDate!,
         category: _selectedCategory,
-      ),
-    );
-    Navigator.pop(context);
+      );
+      if (!context.mounted) return;
+      Navigator.of(context).pop(newExpense);
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to add expense: $error'),
+        ),
+      );
+    }
   }
 
   @override
@@ -271,14 +301,22 @@ class _NewExpenseState extends State<NewExpense> {
                       ),
                       const Spacer(),
                       TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: _isSending
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                              },
                         child: const Text('Cancel'),
                       ),
                       ElevatedButton(
-                        onPressed: _submitExpense,
-                        child: const Text('Save expense'),
+                        onPressed: _isSending ? null : _submitExpense,
+                        child: _isSending
+                            ? const SizedBox(
+                                height: 16.0,
+                                width: 16.0,
+                                child: CircularProgressIndicator(),
+                              )
+                            : const Text('Save expense'),
                       )
                     ],
                   )
